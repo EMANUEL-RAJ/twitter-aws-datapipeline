@@ -1,2 +1,2 @@
 # twitter-aws-datapipeline
-Data pipeline that pulls user tweets using Twitter API and uploads them to S3 bucket
+Data pipeline that pulls tweets using Twitter API for a given search work and uploads them to S3 bucket
