@@ -8,9 +8,6 @@ from main import file_handler
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-#formatter = logging.Formatter(LOG_FORMAT, datefmt="%d/%m/%Y %H:%M:%S")
-#file_handler = logging.FileHandler('../logs/{}'.format(LOG_FILE_NAME))
-#file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 PER_PAGE_COUNT = 100
