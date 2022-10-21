@@ -2,12 +2,25 @@ import os
 import sys
 import boto3
 import tweepy
+import logging
 from datetime import datetime
 from argparse import ArgumentParser
 from configparser import ConfigParser
 import twitter_etl
 
 NOW = datetime.now().strftime("%Y%d%m%H%M%S")
+LOG_FORMAT = '%(asctime)s : %(name)s : %(levelname)s - 	%(message)s'
+LOG_FILE_NAME = 'twitter_datapipeline_{}.log'.format(datetime.now().strftime("%Y%d%m%H%M%S"))
+
+# Configuring filehandler for logger
+formatter = logging.Formatter(LOG_FORMAT, datefmt="%d/%m/%Y %H:%M:%S")
+file_handler = logging.FileHandler('../logs/{}'.format(LOG_FILE_NAME))
+file_handler.setFormatter(formatter)
+
+# Configuring logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
 
 class TwitterSession:
     def __init__(self, arguments):
@@ -46,7 +59,7 @@ class TwitterSession:
                                         access_token_secret=self.__access_token_secret
                                         )
         api = tweepy.API(auth)
-        print("Created twitter api client")
+        logger.info("Created twitter api client")
         return api
 
     def get_s3_client(self):
@@ -59,7 +72,7 @@ class TwitterSession:
                                  aws_access_key_id=self.__aws_access_key,
                                  aws_secret_access_key=self.__aws_secret_key
                                  )
-        print("Created S3 client")
+        logger.info("Created S3 client")
         return s3_client
 
 
@@ -79,12 +92,12 @@ def parser_arguments(args):
 
 
 if __name__ == '__main__':
-    print("Arguments passed to command line: {}".format([str(arg) for arg in sys.argv[1:]]))
+    logger.info("Arguments passed to command line: {}".format([str(arg) for arg in sys.argv[1:]]))
     parsed_args = parser_arguments(sys.argv[1:])
-    print("Parsed arguments:")
+    logger.info("Parsed arguments:")
     for arg in vars(parsed_args):
-        print("\t{}: {}".format(arg, getattr(parsed_args, arg)))
-    print("Creating twitter session")
+        logger.info("\t{}: {}".format(arg, getattr(parsed_args, arg)))
+    logger.info("Creating twitter session")
     session = TwitterSession(parsed_args)
-    print("Calling ingestion function")
+    logger.info("Calling ingestion function")
     twitter_etl.ingest(session)
