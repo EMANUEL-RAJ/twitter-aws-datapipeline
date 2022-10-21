@@ -1,7 +1,17 @@
 import io
 import tweepy
+import logging
 import pandas as pd
 from math import ceil
+
+from main import file_handler
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+#formatter = logging.Formatter(LOG_FORMAT, datefmt="%d/%m/%Y %H:%M:%S")
+#file_handler = logging.FileHandler('../logs/{}'.format(LOG_FILE_NAME))
+#file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 PER_PAGE_COUNT = 100
 
@@ -13,7 +23,7 @@ def ingest(session):
     """
     tweets_list = []
     page_count = ceil(session.parsed_args.count / PER_PAGE_COUNT)
-    print("Getting tweets using search word: {}".format(session.parsed_args.search))
+    logger.info("Getting tweets using search word: {}".format(session.parsed_args.search))
     for page in tweepy.Cursor(session.twitter_api.search_tweets,
                               session.parsed_args.search,
                               count=session.parsed_args.count,
@@ -42,13 +52,13 @@ def ingest(session):
                               'author_profile_desc': tweet.author.description}
             tweets_list.append(extracted_data)
     data = pd.DataFrame(tweets_list)
-    print("Extracted {} tweets.".format(len(data.index)))
+    logger.info("Extracted {} tweets.".format(len(data.index)))
     s3_upload(session, data)
 
 
 def s3_upload(session, data):
     try:
-        print("Uploading data into S3 bucket - {}".format(session.aws_bucket_name))
+        logger.info("Uploading data into S3 bucket - {}".format(session.aws_bucket_name))
         with io.StringIO() as csv_buffer:
             data.to_csv(csv_buffer, index=False)
 
@@ -59,8 +69,8 @@ def s3_upload(session, data):
             status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
             if status == 200:
-                print("File {} uploaded successfully".format(session.file_name))
+                logger.info("File {} uploaded successfully".format(session.file_name))
             else:
-                print("Upload failed. Status: {}".format(status))
+                logger.error("Upload failed. Status: {}".format(status))
     except Exception as e: 
-        print("Pipeline failed. Error: {}".format(e))
+        logger.error("Pipeline failed. Error: {}".format(e))
